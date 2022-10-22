@@ -10,6 +10,7 @@ int arg_numharmonics=64;
 int arg_numperiods=16;
 int arg_numoversampling=4;
 int arg_oddonly=0;
+float arg_frequency=440.0f;
 float arg_decay=1.0f;
 float arg_bandwidth=0.01f;
 
@@ -19,6 +20,7 @@ struct poptOption argtable[]={
     { "harmonics",      'H', POPT_ARG_INT,      &arg_numharmonics,      0, "number of harmonics to produce (default 64)", "num" },
     { "periods",        'P', POPT_ARG_INT,      &arg_numperiods,        0, "number of quasi-periods to produce (default 16)", "num" },
     { "oversampling",   'O', POPT_ARG_INT,      &arg_numoversampling,   0, "oversampling factor (default 4)", "num" },
+    { "frequency",      'F', POPT_ARG_FLOAT,    &arg_frequency,         0, "concert pitch, i.e. the frequency of A4 (default 440)", "freq" },
     { "decay",          'd', POPT_ARG_FLOAT,    &arg_decay,             0, "exponent at which the harmonics decay", "exp" },
     { "bandwidth",      'b', POPT_ARG_FLOAT,    &arg_bandwidth,         0, "harmonic bandwidth" },
     { "odd",            'o', POPT_ARG_VAL,      &arg_oddonly,           1, "only use odd harmonics" },
@@ -104,7 +106,7 @@ int main(int argc, const char* argv[])
     // write output file
     SF_INFO sfinfo;
     sfinfo.frames=numsamples;
-    sfinfo.samplerate=440 * arg_numoversampling * arg_numharmonics;
+    sfinfo.samplerate=lrint(0.594603558 * arg_frequency * arg_numoversampling * arg_numharmonics);  // tune to C4
     sfinfo.channels=arg_numchannels;
     sfinfo.format=SF_FORMAT_WAV | SF_FORMAT_PCM_32;
     sfinfo.sections=1;
