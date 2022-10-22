@@ -6,10 +6,10 @@
 #include <sndfile.h>
 
 int arg_numchannels=1;
-int arg_numharmonics=256;
+int arg_numharmonics=64;
 int arg_numperiods=16;
 float arg_decay=1.0f;
-float arg_bandwidth=0.001f;
+float arg_bandwidth=0.01f;
 
 struct poptOption argtable[]={
     { "mono",       'M', POPT_ARG_VAL,      &arg_numchannels,   1, "output mono sample (one channel)", NULL },
@@ -56,8 +56,7 @@ int main(int argc, const char* argv[])
         double magnitude=pow((double) i, -arg_decay);
         double bandwidth=arg_bandwidth * i * arg_numperiods;
 
-        int binwidth=(int) ceil(4.0*bandwidth);
-        printf("binwidth[%d]=%d\n", i, binwidth);
+        int binwidth=(int) ceil(3.5*bandwidth);
 
         for (int j=0;j<arg_numchannels;j++) {
             for (int k=-binwidth;k<=binwidth;k++) {
