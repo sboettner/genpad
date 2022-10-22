@@ -64,16 +64,21 @@ int main(int argc, const char* argv[])
 
         int binwidth=(int) ceil(3.5*bandwidth);
 
-        for (int j=0;j<arg_numchannels;j++) {
-            for (int k=-binwidth;k<=binwidth;k++) {
-                double phase=M_PI*ldexp(rand()&0xffffff, -23);
-                double s=(double) k/bandwidth;
-                double amp=magnitude * exp(-s*s) / bandwidth;
-                int idx=i*arg_numperiods+k;
-                if (idx<1 || idx>=numsamples/2) continue;
+        double erf_left=-1.0;
+        for (int j=-binwidth;j<=binwidth;j++) {
+            double erf_right=j<binwidth ? erf((j+0.5)/bandwidth) : 1.0;
+            double amp=magnitude * (erf_right - erf_left);
 
-                samples[j][idx]+=cos(phase) * amp;
-                samples[j][numsamples-idx]+=sin(phase) * amp;
+            erf_left=erf_right;
+
+            int idx=i*arg_numperiods+j;
+            if (idx<1 || idx>=numsamples/2) continue;
+
+            for (int k=0;k<arg_numchannels;k++) {
+                double phase=M_PI*ldexp(rand()&0xffffff, -23);
+
+                samples[k][idx]+=cos(phase) * amp;
+                samples[k][numsamples-idx]+=sin(phase) * amp;
             }
         }
     }
