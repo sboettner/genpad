@@ -13,6 +13,7 @@ int arg_oddonly=0;
 float arg_frequency=440.0f;
 float arg_decay=1.0f;
 float arg_bandwidth=0.01f;
+float arg_bandwidthscaling=1.0f;
 
 struct poptOption argtable[]={
     { "mono",           'M', POPT_ARG_VAL,      &arg_numchannels,       1, "output mono sample (one channel)", NULL },
@@ -23,6 +24,7 @@ struct poptOption argtable[]={
     { "frequency",      'F', POPT_ARG_FLOAT,    &arg_frequency,         0, "concert pitch, i.e. the frequency of A4 (default 440)", "freq" },
     { "decay",          'd', POPT_ARG_FLOAT,    &arg_decay,             0, "exponent at which the harmonics decay", "exp" },
     { "bandwidth",      'b', POPT_ARG_FLOAT,    &arg_bandwidth,         0, "harmonic bandwidth" },
+    { "scaling",        's', POPT_ARG_FLOAT,    &arg_bandwidthscaling,  0, "harmonic bandwith scaling exponent", " exp" },
     { "odd",            'o', POPT_ARG_VAL,      &arg_oddonly,           1, "only use odd harmonics" },
     POPT_AUTOHELP
     POPT_TABLEEND
@@ -62,7 +64,7 @@ int main(int argc, const char* argv[])
         if (arg_oddonly && !(i&1)) continue;
 
         double magnitude=pow((double) i, -arg_decay);
-        double bandwidth=arg_bandwidth * i * arg_numperiods;
+        double bandwidth=arg_bandwidth * arg_numperiods * pow((double) i, arg_bandwidthscaling);
 
         int binwidth=(int) ceil(3.5*bandwidth);
 
@@ -93,14 +95,27 @@ int main(int argc, const char* argv[])
     }
 
 
-    // normalize sample data
+    // normalize sample data and find optimal starting position
     double maxabs=0.0;
-    for (int i=0;i<arg_numchannels;i++)
-        for (int j=0;j<numsamples;j++) {
-            double v=fabs(samples[i][j]);
+    double minrms=1e10;
+    int minrmsat=0;
+
+    for (int i=0;i<numsamples;i++) {
+        double rms=0.0;
+
+        for (int j=0;j<arg_numchannels;j++) {
+            double v=fabs(samples[j][i]);
             if (v>maxabs)
                 maxabs=v;
+
+            rms+=v*v;
         }
+
+        if (rms<minrms) {
+            minrms=rms;
+            minrmsat=i;
+        }
+    }
 
 
     // write output file
@@ -121,7 +136,7 @@ int main(int argc, const char* argv[])
     double* writebuf=(double*) malloc(numsamples*arg_numchannels*sizeof(double));
     for (int i=0;i<numsamples;i++)
         for (int j=0;j<arg_numchannels;j++)
-            writebuf[i*arg_numchannels+j]=samples[j][i] / maxabs;
+            writebuf[i*arg_numchannels+j]=samples[j][(i+minrmsat)%numsamples] / maxabs;
     
     sf_writef_double(file, writebuf, numsamples);
     free(writebuf);
