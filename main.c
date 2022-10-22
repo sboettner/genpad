@@ -8,18 +8,20 @@
 int arg_numchannels=1;
 int arg_numharmonics=64;
 int arg_numperiods=16;
+int arg_numoversampling=4;
 int arg_oddonly=0;
 float arg_decay=1.0f;
 float arg_bandwidth=0.01f;
 
 struct poptOption argtable[]={
-    { "mono",       'M', POPT_ARG_VAL,      &arg_numchannels,   1, "output mono sample (one channel)", NULL },
-    { "stereo",     'S', POPT_ARG_VAL,      &arg_numchannels,   2, "output stereo sample (two channels)", NULL },
-    { "harmonics",  'h', POPT_ARG_INT,      &arg_numharmonics,  0, "number of harmonics to produce", "num" },
-    { "periods",    'p', POPT_ARG_INT,      &arg_numperiods,    0, "number of quasi-periods to produce", "num" },
-    { "decay",      'd', POPT_ARG_FLOAT,    &arg_decay,         0, "exponent at which the harmonics decay", "exp" },
-    { "bandwidth",  'b', POPT_ARG_FLOAT,    &arg_bandwidth,     0, "harmonic bandwidth" },
-    { "odd",        'o', POPT_ARG_VAL,      &arg_oddonly,       1, "only use odd harmonics" },
+    { "mono",           'M', POPT_ARG_VAL,      &arg_numchannels,       1, "output mono sample (one channel)", NULL },
+    { "stereo",         'S', POPT_ARG_VAL,      &arg_numchannels,       2, "output stereo sample (two channels)", NULL },
+    { "harmonics",      'H', POPT_ARG_INT,      &arg_numharmonics,      0, "number of harmonics to produce (default 64)", "num" },
+    { "periods",        'P', POPT_ARG_INT,      &arg_numperiods,        0, "number of quasi-periods to produce (default 16)", "num" },
+    { "oversampling",   'O', POPT_ARG_INT,      &arg_numoversampling,   0, "oversampling factor (default 4)", "num" },
+    { "decay",          'd', POPT_ARG_FLOAT,    &arg_decay,             0, "exponent at which the harmonics decay", "exp" },
+    { "bandwidth",      'b', POPT_ARG_FLOAT,    &arg_bandwidth,         0, "harmonic bandwidth" },
+    { "odd",            'o', POPT_ARG_VAL,      &arg_oddonly,           1, "only use odd harmonics" },
     POPT_AUTOHELP
     POPT_TABLEEND
 };
@@ -44,7 +46,7 @@ int main(int argc, const char* argv[])
 
 
     // allocate sample buffers
-    numsamples=2*arg_numharmonics*arg_numperiods;
+    numsamples=2*arg_numoversampling*arg_numharmonics*arg_numperiods;
     samples=(double**) malloc(sizeof(double*)*arg_numchannels);
     for (int i=0;i<arg_numchannels;i++) {
         samples[i]=(double*) fftw_malloc(sizeof(double)*numsamples);
@@ -56,7 +58,7 @@ int main(int argc, const char* argv[])
 
     for (int i=1;i<arg_numharmonics;i++) {
         if (arg_oddonly && !(i&1)) continue;
-        
+
         double magnitude=pow((double) i, -arg_decay);
         double bandwidth=arg_bandwidth * i * arg_numperiods;
 
@@ -97,7 +99,7 @@ int main(int argc, const char* argv[])
     // write output file
     SF_INFO sfinfo;
     sfinfo.frames=numsamples;
-    sfinfo.samplerate=440 * arg_numharmonics;
+    sfinfo.samplerate=440 * arg_numoversampling * arg_numharmonics;
     sfinfo.channels=arg_numchannels;
     sfinfo.format=SF_FORMAT_WAV | SF_FORMAT_PCM_32;
     sfinfo.sections=1;
