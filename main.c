@@ -8,6 +8,7 @@
 int arg_numchannels=1;
 int arg_numharmonics=64;
 int arg_numperiods=16;
+int arg_oddonly=0;
 float arg_decay=1.0f;
 float arg_bandwidth=0.01f;
 
@@ -18,6 +19,7 @@ struct poptOption argtable[]={
     { "periods",    'p', POPT_ARG_INT,      &arg_numperiods,    0, "number of quasi-periods to produce", "num" },
     { "decay",      'd', POPT_ARG_FLOAT,    &arg_decay,         0, "exponent at which the harmonics decay", "exp" },
     { "bandwidth",  'b', POPT_ARG_FLOAT,    &arg_bandwidth,     0, "harmonic bandwidth" },
+    { "odd",        'o', POPT_ARG_VAL,      &arg_oddonly,       1, "only use odd harmonics" },
     POPT_AUTOHELP
     POPT_TABLEEND
 };
@@ -53,6 +55,8 @@ int main(int argc, const char* argv[])
 
 
     for (int i=1;i<arg_numharmonics;i++) {
+        if (arg_oddonly && !(i&1)) continue;
+        
         double magnitude=pow((double) i, -arg_decay);
         double bandwidth=arg_bandwidth * i * arg_numperiods;
 
